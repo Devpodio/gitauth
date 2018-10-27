@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "description": "Get your github token using oauth2 api",
   "main": "index.js",
+  "engines": {
+    "node": ">=8"
+  },
+  "bin": {
+    "gitauth": "./bin/gitauth"
+  },
   "repository": "https://github.com/uniibu/gitauth",
   "author": "unibtc <unibtc@gmail.com>",
   "license": "MIT",
