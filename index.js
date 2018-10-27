@@ -76,3 +76,10 @@ exports.logout = async (username) => {
   }
   console.info('[INFO] Successfully logged out from this system');
 };
+
+exports.verify = async (username) => {
+  if (!username) {
+    return false;
+  }
+  return checkGitCreds(username);
+};

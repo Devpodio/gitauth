@@ -4,10 +4,12 @@ const args = process.argv.slice(2);
 const command = args.shift();
 const gitAuth = require('../index');
 
-if(command === 'login'){
-  gitAuth.login(...args).catch(e => console.error(e.message))
-}else if(command === 'logout'){
-  gitAuth.logout(...args).catch(e => console.error(e.message))
-}else{
-  console.error('Invalid command [login, logout] are the available commands')
+if (command === 'login') {
+  gitAuth.login(...args).catch(e => console.error(e.message));
+} else if (command === 'logout') {
+  gitAuth.logout(...args).catch(e => console.error(e.message));
+} else if (command === 'verify') {
+  gitAuth.verify(...args).then(console.log).catch(e => console.error(e.message));
+} else {
+  console.error('Invalid command [login, logout] are the available commands');
 }
