@@ -12,4 +12,9 @@ Get your github token using oauth2 api
 - Simple deletes your account from `.git-credentials`
 - Delete your token on github if you want it to be disabled permanently
 
+## CLI
+
+- `gitauth login username password otp`
+- `gitauth logout usernam`
+
 WARNING: This module is specifically made for local and not for production. No encryption of any kind. 
