@@ -7,11 +7,13 @@
   "author": "unibtc <unibtc@gmail.com>",
   "license": "MIT",
   "private": false,
+  "scripts": {
+    "test": "jest --reporters=default --coverage"
+  },
   "dependencies": {
     "gh-got": "^8.0.1"
   },
   "devDependencies": {
-    "chai": "^4.2.0",
-    "mocha": "^5.2.0"
+    "jest": "^23.6.0"
   }
 }

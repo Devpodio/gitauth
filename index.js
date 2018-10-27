@@ -2,16 +2,21 @@ const ghGot = require('gh-got');
 const fs = require('fs');
 const gitCredsDir = `${process.env.HOME}/.git-credentials`;
 
-const checkGitCreds = function(user){
+const checkGitCreds = user => {
+  if (!fs.existsSync(gitCredsDir)) {
+    return false;
+  }
   const readCreds = fs.readFileSync(gitCredsDir, 'utf8');
   const users = readCreds.split('\n').map(i => i.split(':')[0]);
   return users.includes(user);
 };
 
 exports.login = async (username, password, otp) => {
-  if(checkGitCreds(username)){
-    console.error('Already logged in');
-    process.exit(1);
+  if (!username || !password) {
+    throw new Error('[GitAuth] Missing username and/or password');
+  }
+  if (checkGitCreds(username)) {
+    throw new Error('[GitAuth] Already logged in');
   }
   let headers = {
     'accept': 'application/vnd.github.v3+json',
