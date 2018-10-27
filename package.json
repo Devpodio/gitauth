@@ -9,5 +9,9 @@
   "private": false,
   "dependencies": {
     "gh-got": "^8.0.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0"
   }
 }
