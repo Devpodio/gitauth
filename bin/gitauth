@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 
 const args = process.argv.slice(2);
-
+const command = args.shift();
 const gitAuth = require('../index');
 
-gitAuth.login(...args).catch(e => console.error(e.message))
+if(command === 'login'){
+  gitAuth.login(...args).catch(e => console.error(e.message))
+}else if(command === 'logout'){
+  gitAuth.logout(...args).catch(e => console.error(e.message))
+}else{
+  console.error('Invalid command [login, logout] are the available commands')
+}
