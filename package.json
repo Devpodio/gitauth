@@ -1,0 +1,13 @@
+{
+  "name": "gitauth",
+  "version": "1.0.0",
+  "description": "Get your github token using oauth2 api",
+  "main": "index.js",
+  "repository": "https://github.com/uniibu/gitauth",
+  "author": "unibtc <unibtc@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "gh-got": "^8.0.1"
+  }
+}
