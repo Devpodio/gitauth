@@ -1,6 +1,6 @@
 {
   "name": "gitauth",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Get your github token using oauth2 api",
   "main": "index.js",
   "engines": {
