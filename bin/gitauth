@@ -4,4 +4,4 @@ const args = process.argv.slice(2);
 
 const gitAuth = require('../index');
 
-gitAuth(...args).catch(console.error)
+gitAuth.login(...args).catch(e => console.error(e.message))
