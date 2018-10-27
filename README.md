@@ -2,6 +2,8 @@
 
 Get your github token using oauth2 api
 
+Install - `npm i gitauth -g`
+
 ## API
 
 `.login username password otp`
