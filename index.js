@@ -16,7 +16,7 @@ const checkGitName = async () => {
 const checkGitId = async () => {
   return await gitconfig.get('user.id', { location: 'global' });
 };
-exports.login = async (email, password, otp, name) => {
+exports.login = async (email, password, otp, name, currdir) => {
   await fs.ensureDir(gitCredsDir);
   if (!email || !password || !name) {
     console.error('[GitAuth Error] Missing email, name and/or password');
@@ -52,7 +52,7 @@ exports.login = async (email, password, otp, name) => {
         'user.uname': ghUser.body.login,
         'user.email': email,
         'user.id': userInfo.id,
-        'credential.helper': '/usr/local/bin/gitauth'
+        'credential.helper': path.resolve(currdir,'gitauth')
       }, { location: 'global' });
       console.log('[GitAuth] Successfully authenticated');
       return true;

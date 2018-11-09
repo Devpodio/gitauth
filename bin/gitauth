@@ -51,7 +51,7 @@ const promptsLogin = async () => {
   try {
     const { email } = await prompts(queries.email, { onSubmit });
     const response = await prompts(queries.login);
-    await gitAuth.login(email, response.password, response.otp, response.name);
+    await gitAuth.login(email, response.password, response.otp, response.name, process.cwd());
   } catch (e) {
     console.error('[GitAuth-Cli]', e.message);
     console.error(e.stack);
