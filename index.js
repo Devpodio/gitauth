@@ -71,7 +71,13 @@ exports.get = async () => {
   if (!uname) {
     return false;
   }
-  await execa('git', ['credential-store', '--file', path.resolve(gitCredsDir, `gh.${uname}.cred`), 'get']).stdout.pipe(process.stdout);
+  const gitUrl = await fs.readFile(path.resolve(gitCredsDir, `gh.${uname}.cred`))
+  const { username, password } = new URL(gitUrl);
+  process.stdout.write(
+    'username=' + username + '\n' +
+    'password=' + password + '\n'
+  );
+
 };
 
 exports.logout = async (password, otp) => {
