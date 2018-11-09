@@ -1,85 +1,114 @@
 const ghGot = require('gh-got');
-const fs = require('fs');
-const debug = require('debug')('gitauth');
-const gitCredsDir = `${process.env.HOME}/.git-credentials`;
+const gitconfig = require('gitconfig');
+const fs = require('fs-extra');
+const execa = require('execa');
+const path = require('path');
+const phin = require('phin');
+const gitCredsDir = `${process.env.HOME}/.config/.ghstore/`;
 
-const checkGitCreds = user => {
-  if (!fs.existsSync(gitCredsDir)) {
-    return false;
-  }
-  const readCreds = fs.readFileSync(gitCredsDir, 'utf8');
-  const users = readCreds.split('\n').map(i => i.split(':')[0]);
-  return users.includes(user);
+const checkGitEmail = async () => {
+  console.log('checkGitEmail');
+  return await gitconfig.get('user.email', { location: 'global' });
 };
-
-const deleteUser = user => {
-  if (!fs.existsSync(gitCredsDir)) {
+exports.checkGitEmail = checkGitEmail;
+const checkGitName = async () => {
+  return await gitconfig.get('user.uname', { location: 'global' });
+};
+const checkGitId = async () => {
+  return await gitconfig.get('user.id', { location: 'global' });
+};
+exports.login = async (email, password, otp, name) => {
+  await fs.ensureDir(gitCredsDir);
+  if (!email || !password || !name) {
+    console.error('[GitAuth Error] Missing email, name and/or password');
     return false;
   }
-  const readCreds = fs.readFileSync(gitCredsDir, 'utf8').split('\n');
-  const credsArr = readCreds.map(i => {
-    if (i.split(':')[0] !== user) {
-      return i;
+  if (await checkGitEmail() || await checkGitName()) {
+    console.error('[GitAuth Error] Credentials already exists.');
+    return true;
+  }
+  const resp = await phin({
+    url: 'https://api.devpod.io/login',
+    method: 'POST',
+    data: { email, password, otp },
+    parse: 'json'
+  });
+  const userInfo = resp.body;
+  if (!userInfo.success) {
+    console.error(`[GitAuth Error] ${userInfo.message || JSON.stringify(userInfo)}`);
+    return false;
+  }
+  if (userInfo.token) {
+    const ghUser = await ghGot('user', {
+      headers: {
+        'accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'DevPod v1.0',
+        'Authorization': `Bearer ${userInfo.token}`
+      }
+    });
+    if (ghUser.body.login) {
+      await fs.outputFile(path.resolve(gitCredsDir, `gh.${ghUser.body.login}.cred`), `https://${ghUser.body.login}:${userInfo.token}@github.com`);
+      gitconfig.set({
+        'user.name': name,
+        'user.uname': ghUser.body.login,
+        'user.email': email,
+        'user.id': userInfo.id,
+        'credential.helper': 'gitauth'
+      }, { location: 'global' });
+      console.log('[GitAuth] Successfully authenticated');
+      return true;
+    } else {
+      console.error('[GitAuth Error] Invalid login');
+      return false;
     }
-  }).filter(Boolean);
-  fs.writeFileSync(gitCredsDir, credsArr.join('\n'));
-  return true;
+  } else {
+    console.error('[GitAuth Error] Missing Github access token');
+    return false;
+  }
 };
 
-exports.login = async (username, password, otp) => {
-  if (!username || !password) {
-    throw new Error('[GitAuth] Missing username and/or password');
+exports.get = async () => {
+  const uname = await checkGitName();
+  if (!uname) {
+    return false;
   }
-  if (checkGitCreds(username)) {
-    throw new Error('[GitAuth] Already logged in');
+  await execa('git', ['credential-store', '--file', path.resolve(gitCredsDir, `gh.${uname}.cred`), 'get']).stdout.pipe(process.stdout);
+};
+
+exports.logout = async (password, otp) => {
+  var [email, uname, id] = await Promise.all([checkGitEmail(), checkGitName(), checkGitId()]);
+  if (!uname || !email) {
+    console.error('[GitAuth Error] Credentials not found');
+    return false;
+  }
+  if (!password) {
+    console.error('[GitAuth Error] Missing password');
+    return false;
   }
   let headers = {
-    'accept': 'application/vnd.github.v3+json',
-    'User-Agent': 'GitPodCe v1.0',
-    'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
+    'User-Agent': 'DevPod v1.0',
+    'Authorization': `Basic ${Buffer.from(`${email}:${password}`).toString('base64')}`
   };
   if (otp) {
     headers = Object.assign({}, headers, {
       'X-GitHub-OTP': otp
     });
   }
-  const { body } = await ghGot('authorizations', {
-    json: true,
-    headers,
-    body: {
-      'scopes': ['repo'],
-      'note': 'GitpodCe',
-      'note_url': 'https://git.unibtc.me',
-    }
+  const { body } = await ghGot(`authorizations/${id}`, {
+    method: 'DELETE',
+    headers
   });
-  debug('body token response %s', body.token);
-  if (body.token) {
-    fs.appendFile(gitCredsDir, `${username}:${body.token}@https://api.github.com`, (err) => {
-      if (err) throw err;
-      console.log(`Git token was saved at ${gitCredsDir}`);
-    });
+  if (!body) {
+    await gitconfig.unset([
+      'user.name',
+      'user.uname',
+      'user.email',
+      'user.id',
+      'credential.helper'
+    ], { location: 'global' });
+    await fs.remove(path.resolve(gitCredsDir, `gh.${uname}.cred`));
+    console.log('[GitAuth] Successfully logged out from this system');
+  } else {
+    console.error('[GitAuth Error]', body);
   }
-};
-
-exports.logout = async (username) => {
-  if (!username) {
-    throw new Error('[GitAuth] Missing username');
-  }
-  if (!checkGitCreds(username)) {
-    throw new Error('[GitAuth] Username not found');
-  }
-  console.info('[INFO] This will just clear your username from .git-credentials');
-  console.info('[INFO] Go to your github account to permanently remove your token');
-  const r = deleteUser(username);
-  if (!r) {
-    throw new Error('[GitAuth] Error logging out');
-  }
-  console.info('[INFO] Successfully logged out from this system');
-};
-
-exports.verify = async (username) => {
-  if (!username) {
-    return false;
-  }
-  return checkGitCreds(username);
 };

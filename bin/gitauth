@@ -1,15 +1,91 @@
 #!/usr/bin/env node
 
-const args = process.argv.slice(2);
-const command = args.shift();
+const prompts = require('prompts');
+const yargs = require('yargs');
 const gitAuth = require('../index');
 
-if (command === 'login') {
-  gitAuth.login(...args).catch(e => console.error(e.message));
-} else if (command === 'logout') {
-  gitAuth.logout(...args).catch(e => console.error(e.message));
-} else if (command === 'verify') {
-  gitAuth.verify(...args).then(console.log).catch(e => console.error(e.message));
-} else {
-  console.error('Invalid command [login, logout] are the available commands');
-}
+let onSubmit = async (prompt, email) => {
+  const r = await gitAuth.checkGitEmail();
+  console.log(email, r);
+  if (r == email) {
+    console.error('[GitAuth-Cli] Credentials already exists.');
+    process.exit(1);
+  }
+};
+
+const queries = {
+  email: {
+    type: 'text',
+    name: 'email',
+    message: 'What is your GitHub email?'
+  },
+  login: [{
+    type: 'text',
+    style: 'password',
+    name: 'password',
+    message: 'Enter your GitHub password:'
+  }, {
+    type: 'text',
+    name: 'name',
+    message: 'What is your first and last name?'
+  }, {
+    initial: null,
+    type: 'number',
+    name: 'otp',
+    message: 'Enter your OTP if enabled:'
+  }],
+  logout: [{
+    type: 'text',
+    style: 'password',
+    name: 'password',
+    message: 'Enter your GitHub password:'
+  },
+  {
+    initial: null,
+    type: 'number',
+    name: 'otp',
+    message: 'Enter your OTP if enabled:'
+  }]
+};
+
+const promptsLogin = async () => {
+  try {
+    const { email } = await prompts(queries.email, { onSubmit });
+    const response = await prompts(queries.login);
+    await gitAuth.login(email, response.password, response.otp, response.name);
+  } catch (e) {
+    console.error('[GitAuth-Cli]', e.message);
+    console.error(e.stack);
+    console.error('[GitAuth-Cli] Try again');
+    await promptsLogin();
+  }
+};
+const promptsLogout = async () => {
+  try {
+    const response = await prompts(queries.logout);
+    await gitAuth.logout(response.password, response.otp);
+  } catch (e) {
+    console.error('[GitAuth-Cli]', e.message);
+    console.error('[GitAuth-Cli] Try again');
+  }
+};
+const noop = () => { };
+yargs.usage('$0 <cmd>')
+  .command('init', 'Initialize authentication', noop, async function () {
+    const logged = await gitAuth.checkGitEmail();
+    if (!logged) {
+      await promptsLogin();
+    }
+  })
+  .command('login', 'Authenticate to Github', noop, async () => {
+    await promptsLogin();
+  })
+  .command('logout', 'Remove any Github credentials', noop, async () => {
+    await promptsLogout();
+  })
+  .command('get', 'Get credentials', noop, async () => {
+    await gitAuth.get();
+  })
+  .demandCommand()
+  .help()
+  .argv;
