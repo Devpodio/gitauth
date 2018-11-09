@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Get your github token using oauth2 api",
   "main": "index.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=8"
   },
