@@ -52,7 +52,7 @@ exports.login = async (email, password, otp, name) => {
         'user.uname': ghUser.body.login,
         'user.email': email,
         'user.id': userInfo.id,
-        'credential.helper': 'gitauth'
+        'credential.helper': '/usr/local/bin/gitauth'
       }, { location: 'global' });
       console.log('[GitAuth] Successfully authenticated');
       return true;
