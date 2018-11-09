@@ -7,7 +7,6 @@ const phin = require('phin');
 const gitCredsDir = `${process.env.HOME}/.config/.ghstore/`;
 
 const checkGitEmail = async () => {
-  console.log('checkGitEmail');
   return await gitconfig.get('user.email', { location: 'global' });
 };
 exports.checkGitEmail = checkGitEmail;

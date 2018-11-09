@@ -6,7 +6,6 @@ const gitAuth = require('../index');
 
 let onSubmit = async (prompt, email) => {
   const r = await gitAuth.checkGitEmail();
-  console.log(email, r);
   if (r == email) {
     console.error('[GitAuth-Cli] Credentials already exists.');
     process.exit(1);
