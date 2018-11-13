@@ -1,5 +1,6 @@
 const ghGot = require('gh-got');
 const gitconfig = require('gitconfig');
+const { URL } = require('url')
 const fs = require('fs-extra');
 const execa = require('execa');
 const path = require('path');
